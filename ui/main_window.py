@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QWidget
 
 from core.detector import ObjectTracker
 from core.geometry import BirdEyeTransformer
+from core.adas_logic import CollisionWarningSystem
 
 
 class VideoWorker(QThread):
@@ -21,7 +22,12 @@ class VideoWorker(QThread):
     def run(self):
         tracker = ObjectTracker()
         bev_transformer = BirdEyeTransformer()
+        fcw_system = CollisionWarningSystem(20)
         cap = cv2.VideoCapture(self.video_path)
+
+        video_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+
+        dt = 1.0 / video_fps
 
         while self._running and cap.isOpened():
             start_time = time.time()
@@ -38,6 +44,10 @@ class VideoWorker(QThread):
 
                 bottom_center = ((x1 + x2) / 2.0, float(y2))
                 bev_x, bev_y = bev_transformer.transform_point(bottom_center)
+
+                fcw_data = fcw_system.update(det["id"], bev_x, bev_y, w, h, dt)
+
+                color = (0, 0, 255) if fcw_data["warning"] else (0, 255, 0)
 
                 cv2.circle(
                     frame,
@@ -56,16 +66,31 @@ class VideoWorker(QThread):
                         -1,
                     )
 
-                label = f"#{det['id']} {det["class_name"]} ({det['confidence']} | BEV_Y: {int(bev_y)}px)"
+                label = f"#{det['id']} {det["class_name"]} ({det['confidence']})"
+                if fcw_data["distance_m"] is not None:
+                    label += f"| {fcw_data['distance_m']}m"
+                if fcw_data["ttc"] is not None:
+                    label += f" | TTC: {fcw_data["ttc"]}s"
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(
                     frame,
                     label,
                     (x1, y1 - 8),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.3,
-                    (0, 255, 0),
-                    2,
+                    0.4,
+                    color,
+                    1,
+                )
+
+            if fcw_data["warning"]:
+                cv2.putText(
+                    frame,
+                    "ATTENTION COLLISION - STOP!",
+                    (50, 80),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1.2,
+                    (0, 0, 255),
+                    3,
                 )
 
             pip_w, pip_h = w // 4, h // 4

@@ -10,10 +10,10 @@ class BirdEyeTransformer:
 
         src = np.float32(
             [
-                [self.w * 0.43, self.h * 0.65],  # Lewy górny (daleko na drodze)
-                [self.w * 0.57, self.h * 0.65],  # Prawy górny (daleko na drodze)
-                [self.w * 0.85, self.h * 0.95],  # Prawy dolny (blisko maski)
-                [self.w * 0.15, self.h * 0.95],  # Lewy dolny (blisko maski)
+                [self.w * 0.43, self.h * 0.62],
+                [self.w * 0.57, self.h * 0.62],
+                [self.w * 0.85, self.h * 0.95],
+                [self.w * 0.15, self.h * 0.95],
             ]
         )
 
