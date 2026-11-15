@@ -83,6 +83,27 @@ target/
 profile_default/
 ipython_config.py
 
+
+# --- Models AI ---
+models/*.pt
+models/*.onnx
+models/*.engine
+*.pt
+*.onnx
+
+# --- Datasets ---
+data/*.mp4
+data/*.avi
+data/*.mkv
+data/*.mov
+!data/.gitkeep
+
+# --- IDE  ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
 #   intended to run in multiple environments; otherwise, check them in:
