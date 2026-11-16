@@ -13,6 +13,8 @@ class ObjectTracker:
 
     def process_frame(self, frame):
 
+        h, w = frame.shape[:2]
+
         results = self.model.track(
             frame,
             persist=True,
@@ -31,6 +33,12 @@ class ObjectTracker:
             confs = boxes.conf.cpu().tolist()
 
             for box, track_id, cls_id, conf in zip(coords, track_ids, classes, confs):
+
+                x1, y1, x2, y2 = box
+
+                if y1 > h * 0.65 and (x2 - x1) > w * 0.7:
+                    continue
+
                 detections.append(
                     {
                         "id": track_id,

@@ -12,8 +12,8 @@ class BirdEyeTransformer:
             [
                 [self.w * 0.43, self.h * 0.62],
                 [self.w * 0.57, self.h * 0.62],
-                [self.w * 0.85, self.h * 0.95],
-                [self.w * 0.15, self.h * 0.95],
+                [self.w * 0.85, self.h * 0.86],
+                [self.w * 0.15, self.h * 0.86],
             ]
         )
 

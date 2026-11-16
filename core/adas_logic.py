@@ -1,5 +1,5 @@
 class CollisionWarningSystem:
-    def __init__(self, pixels_per_meter: float = 20.0, ttc_threshold: float = 2.5):
+    def __init__(self, pixels_per_meter: float = 62.0, ttc_threshold: float = 2.5):
         self.pixels_per_meter = pixels_per_meter
         self.ttc_threshold = ttc_threshold
 
@@ -28,7 +28,7 @@ class CollisionWarningSystem:
         ttc = float("inf")
         warning = False
 
-        in_ego_lane = (img_width * 0.25) <= bev_x <= (img_width * 0.75)
+        in_ego_lane = (img_width * 0.35) <= bev_x <= (img_width * 0.65)
 
         if track_id in self.prev_distances and dt > 0:
             prev_dist = self.prev_distances[track_id]

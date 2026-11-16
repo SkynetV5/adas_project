@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QImage, QPixmap
-from PySide6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QWidget, QPushButton
 
 from core.detector import ObjectTracker
 from core.geometry import BirdEyeTransformer
@@ -18,11 +18,15 @@ class VideoWorker(QThread):
         super().__init__()
         self.video_path = video_path
         self._running = True
+        self._paused = False
+
+    def toogle_pause(self):
+        self._paused = not self._paused
 
     def run(self):
         tracker = ObjectTracker()
         bev_transformer = BirdEyeTransformer()
-        fcw_system = CollisionWarningSystem(20)
+        fcw_system = CollisionWarningSystem(62)
         cap = cv2.VideoCapture(self.video_path)
 
         video_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
@@ -30,6 +34,10 @@ class VideoWorker(QThread):
         dt = 1.0 / video_fps
 
         while self._running and cap.isOpened():
+            if self._paused:
+                self.msleep(50)
+                continue
+
             start_time = time.time()
             ret, frame = cap.read()
             if not ret:
@@ -69,6 +77,7 @@ class VideoWorker(QThread):
                 label = f"#{det['id']} {det["class_name"]} ({det['confidence']})"
                 if fcw_data["distance_m"] is not None:
                     label += f"| {fcw_data['distance_m']}m"
+
                 if fcw_data["ttc"] is not None:
                     label += f" | TTC: {fcw_data["ttc"]}s"
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -114,11 +123,16 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("ADAS Core - Preview in RL")
         self.resize(960, 540)
 
-        self.video_label = QLabel("Ładowanie modelu i wideo...")
+        self.pause_btn = QPushButton("Pause")
+        self.pause_btn.clicked.connect(self.handle_pause_click)
+
+        self.video_label = QLabel("Loading model and video...")
         self.video_label.setAlignment(Qt.AlignCenter)
 
         layout = QVBoxLayout()
         layout.addWidget(self.video_label)
+
+        layout.addWidget(self.pause_btn)
 
         container = QWidget()
         container.setLayout(layout)
@@ -127,6 +141,13 @@ class MainWindow(QMainWindow):
         self.worker = VideoWorker(video_path)
         self.worker.frame_ready.connect(self.update_image)
         self.worker.start()
+
+    def handle_pause_click(self):
+        self.worker.toogle_pause()
+        if self.worker._paused:
+            self.pause_btn.setText("Play")
+        else:
+            self.pause_btn.setText("Pause")
 
     def update_image(self, frame: np.ndarray, fps: float):
 
